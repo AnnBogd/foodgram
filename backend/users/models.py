@@ -107,6 +107,7 @@ class CustomUser(AbstractUser):
         blank=True,
         null=True,
     )
+
     objects = CustomUserManager()
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ('username', 'first_name', 'last_name')
@@ -119,3 +120,38 @@ class CustomUser(AbstractUser):
     def __str__(self) -> str:
         """Вернуть username пользователя."""
         return self.username
+
+
+class Subscription(models.Model):
+    """Модель подписки."""
+
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='follower',
+        verbose_name='Подписчик',
+    )
+    author = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='following',
+        verbose_name='Автор рецептов',
+    )
+
+    class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'author'],
+                name='unique_user_author'
+            ),
+            models.CheckConstraint(
+                check=~models.Q(user=models.F('author')),
+                name='user_prevent_self_follow'
+            )
+        ]
+
+    def __str__(self) -> str:
+        """Определить строковое представление подписки."""
+        return f'{self.user.username} подписан на {self.author.username}'
