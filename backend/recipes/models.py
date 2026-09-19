@@ -1,10 +1,9 @@
 """Модели приложения recipes."""
 
-from django.contrib.auth import get_user_model
+from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
 
-current_user = get_user_model()
 MAX_NAME_LENGTH = 254
 MIN_COOKING_TIME = 0
 MIN_INGREDIENT_AMOUNT = 1
@@ -101,7 +100,7 @@ class Recipe(models.Model):
     """Модель рецепта."""
 
     author = models.ForeignKey(
-        current_user,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         verbose_name='Автор рецепта',
     )
@@ -153,7 +152,7 @@ class Favourite(models.Model):
     """Модель связи рецепта и пользователя через избранное."""
 
     user = models.ForeignKey(
-        current_user,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         verbose_name='Пользователь',
     )
@@ -182,7 +181,7 @@ class ShoppingCart(models.Model):
     """Модель связи рецептов и пользователя через список покупок."""
 
     user = models.ForeignKey(
-        current_user,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         verbose_name='Пользователь',
     )

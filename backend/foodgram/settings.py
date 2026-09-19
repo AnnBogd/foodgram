@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     'django_filters',
     'users.apps.UsersConfig',
     'recipes.apps.RecipesConfig',
+    'api.apps.ApiConfig',
 ]
 
 AUTH_USER_MODEL = 'users.CustomUser'
@@ -101,18 +102,16 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
+    'PAGE_SIZE': 6,
 }
 
 DJOSER = {
     'LOGIN_FIELD': 'email',
     'HIDE_USERS': False,
-    # 'SERIALIZERS': {
-    #     # Используем кастомные сериализаторы (напишем на следующем шаге)
-    #     'user_create': 'api.serializers.CustomUserCreateSerializer',
-    #     'user': 'api.serializers.CustomUserSerializer',
-    #     'current_user': 'api.serializers.CustomUserSerializer',
-    # },
+    'SERIALIZERS': {
+        'user_create': 'api.v1.serializers.CustomUserCreateSerializer',
+        'current_user': 'api.v1.serializers.CustomUserSerializer',
+    },
     'PERMISSIONS': {
         'user': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],
     }
