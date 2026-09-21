@@ -97,6 +97,16 @@ class AvatarSerializer(ModelSerializer):
         model = current_user
         fields = ('avatar',)
 
+    def update(
+            self,
+            instance: AbstractUser,
+            validated_data: dict
+    ) -> AbstractUser:
+        if validated_data.get('avatar') is not None and instance.avatar:
+            if instance.avatar:
+                instance.avatar.delete(save=False)
+        return super().update(instance, validated_data)
+
 
 class TagSerializer(ModelSerializer):
     """Сериализатор для тегов."""
@@ -245,7 +255,89 @@ class RecipeWriteSerializer(ModelSerializer):
         return instance
 
     def to_representation(self, instance: Recipe) -> dict:
-        """Определить сериализатор для выдачи ответа."""
+        """Преобразовать данные для выдачи ответа."""
         return RecipeReadSerializer(instance, context=self.context).data
 
-# избранное и список покупок
+
+class ShortRecipeSerializer(ModelSerializer):
+    """Сериализатор для краткого отображения рецепта."""
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
+        read_only_fields = ('__all__',)
+
+
+class ShoppingCartCreateSerializer(ModelSerializer):
+    """Сериализатор для добавления рецепта в список покупок."""
+
+    class Meta:
+        model = ShoppingCart
+        fields = ('user', 'recipe')
+
+    def validate(self, data: dict) -> dict:
+        """Проверить введенные данные."""
+        user = data.get('user')
+        recipe = data.get('recipe')
+        if ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
+            raise ValidationError('Этот рецепт уже добавлен в список покупок.')
+        return data
+
+    def to_representation(self, instance: ShoppingCart) -> dict:
+        """Преобразовать данные для выдачи ответа."""
+        return ShortRecipeSerializer(
+            instance.recipe,
+            context=self.context
+        ).data
+
+
+class FavouriteCreateSerializer(ModelSerializer):
+    """Сериализатор для добавления рецепта в избранное."""
+
+    class Meta:
+        model = Favourite
+        fields = ('user', 'recipe')
+
+    def validate(self, data: dict) -> dict:
+        """Проверить введенные данные."""
+        user = data.get('user')
+        recipe = data.get('recipe')
+        if Favourite.objects.filter(user=user, recipe=recipe).exists():
+            raise ValidationError('Этот рецепт уже добавлен в избранное.')
+        return data
+
+    def to_representation(self, instance: Favourite) -> dict:
+        """Преобразовать данные для выдачи ответа."""
+        return ShortRecipeSerializer(
+            instance.recipe,
+            context=self.context
+        ).data
+
+
+class SubscriptionSerializer(CustomUserSerializer):
+    """Сериализатор подписок. Наследование от сериализатора юзера."""
+
+    recipes = SerializerMethodField()
+    recipes_count = SerializerMethodField()
+
+    class Meta(CustomUserSerializer.Meta):
+        fields = (
+            CustomUserSerializer.Meta.fields + ('recipes', 'recipes_count'))
+
+    def get_recipes(self, obj: AbstractUser) -> dict:
+        """Получить список рецептов автора с учетом лимита."""
+        request = self.context.get('request')
+        recipes = obj.recipes.all()
+        if request:
+            recipes_limit = request.query_params.get('recipes_limit')
+            if recipes_limit and recipes_limit.isdigit():
+                recipes = recipes[:int(recipes_limit)]
+        return ShortRecipeSerializer(
+            recipes,
+            many=True,
+            context=self.context
+        ).data
+
+    def get_recipes_count(self, obj: AbstractUser) -> int:
+        """Посчитать общее количество рецептов автора."""
+        return obj.recipes.count()
