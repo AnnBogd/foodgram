@@ -5,6 +5,7 @@ import base64
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.core.files.base import ContentFile
+from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
 from djoser.serializers import UserSerializer, UserCreateSerializer
 from rest_framework.serializers import (
@@ -31,7 +32,7 @@ current_user = get_user_model()
 class Base64ImageField(ImageField):
     """Класс специализированного поля для изображений."""
 
-    def to_internal_value(self, data):
+    def to_internal_value(self, data: str) -> UploadedFile:
         """Преобразовать входную строку в файл изображения."""
         if isinstance(data, str) and data.startswith('data:image'):
             format, imgstring = data.split(';base64,')

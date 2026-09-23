@@ -1,5 +1,6 @@
 """Кастомные фильтры первой версии приложения api."""
 
+from django.contrib.auth import get_user_model
 from django.db.models import QuerySet
 from django_filters import (
     BooleanFilter,
@@ -7,7 +8,6 @@ from django_filters import (
     ModelChoiceFilter,
     ModelMultipleChoiceFilter
 )
-from django.contrib.auth import get_user_model
 
 from recipes.models import Recipe, Tag
 

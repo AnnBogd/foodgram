@@ -1,7 +1,7 @@
 """Конфигурации админ-зоны приложения users."""
 
 from django.contrib import admin
-from django.db.models import QuerySet
+from django.db.models import Model, QuerySet
 from django.http import HttpRequest
 
 from .models import (
@@ -24,7 +24,7 @@ class RecipeAdmin(admin.ModelAdmin):
     readonly_fields = ('get_favourite_count',)
 
     @admin.display(description='Добавлений в избранное')
-    def get_favourite_count(self, obj):
+    def get_favourite_count(self, obj: Model) -> int:
         """Подсчитать количество добавлений рецепта в избранное."""
         return obj.favourite.count()
 

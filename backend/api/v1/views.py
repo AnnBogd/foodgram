@@ -18,7 +18,6 @@ from rest_framework.decorators import action
 from rest_framework.permissions import (
     AllowAny,
     IsAuthenticated,
-    IsAuthenticatedOrReadOnly
 )
 from rest_framework.response import Response
 from rest_framework.request import Request
@@ -75,7 +74,8 @@ class CustomUserViewSet(UserViewSet):
     @action(
         detail=False,
         methods=['get'],
-        permission_classes=[IsAuthenticated]
+        permission_classes=[IsAuthenticated],
+        url_path='subscriptions'
     )
     def subscriptions(self, request: Request) -> Response:
         """Вернуть список подписок текущего пользователя."""
@@ -92,7 +92,8 @@ class CustomUserViewSet(UserViewSet):
     @action(
         detail=True,
         methods=['post', 'delete'],
-        permission_classes=[IsAuthenticated]
+        permission_classes=[IsAuthenticated],
+        url_path='subscribe'
     )
     def subscribe(self, request: Request, pk: int = None) -> Response:
         """Создать или удалить подписку."""
@@ -190,7 +191,6 @@ class RecipeViewSet(ModelViewSet):
 
     queryset = Recipe.objects.all()
     http_method_names = ('get', 'post', 'patch', 'delete')
-    permission_classes = (IsAuthenticatedOrReadOnly, )
     filterset_class = RecipeFilter
 
     def get_serializer_class(self) -> Serializer:
@@ -233,7 +233,7 @@ class RecipeViewSet(ModelViewSet):
             .order_by('ingredient__name')
         )
         shopping_list = [
-            f'Список покупок для пользователя: {user.get_full_name()}.\n'
+            f'Список покупок для пользователя {user.get_full_name()}.\n'
         ]
         for item in ingredients:
             shopping_list.append(
