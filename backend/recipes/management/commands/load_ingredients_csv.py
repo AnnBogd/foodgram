@@ -2,6 +2,8 @@
 
 import csv
 import os
+
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from recipes.models import Ingredient
 
@@ -12,7 +14,7 @@ class Command(BaseCommand):
     help = 'Загрузка ингредиентов из CSV файла без заголовков'
 
     def handle(self, *args, **options):
-        file_path = os.path.join('..', 'data', 'ingredients.csv')
+        file_path = os.path.join(settings.BASE_DIR, 'data', 'ingredients.csv')
 
         if not os.path.exists(file_path):
             self.stdout.write(

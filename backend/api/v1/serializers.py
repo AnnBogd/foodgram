@@ -224,7 +224,7 @@ class RecipeWriteSerializer(ModelSerializer):
         for ingredient_data in ingredients:
             IngredientRecipe.objects.create(
                 recipe_id=recipe.id,
-                ingredient_id=ingredient_data['id'],
+                ingredient_id=ingredient_data['id'].pk,
                 amount=ingredient_data['amount']
             )
 
