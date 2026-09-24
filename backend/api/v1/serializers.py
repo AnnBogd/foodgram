@@ -140,7 +140,7 @@ class RecipeReadSerializer(ModelSerializer):
 
     tags = TagSerializer(many=True)
     author = CustomUserSerializer()
-    ingredients = IngredientSerializer(many=True)
+    ingredients = SerializerMethodField()
     is_favorited = SerializerMethodField()
     is_in_shopping_cart = SerializerMethodField()
 
@@ -158,6 +158,19 @@ class RecipeReadSerializer(ModelSerializer):
             'text',
             'cooking_time',
         )
+
+    def get_ingredients(self, obj: Recipe) -> list:
+        """Получить список ингредиентов для текущего рецепта."""
+        recipe_ingredients = obj.ingredient_list.all()
+        return [
+            {
+                'id': item.ingredient.id,
+                'name': item.ingredient.name,
+                'measurement_unit': item.ingredient.measurement_unit,
+                'amount': item.amount
+            }
+            for item in recipe_ingredients
+        ]
 
     def get_is_favorited(self, obj: Recipe) -> bool:
         """Определить кастомное поле is_favorited."""

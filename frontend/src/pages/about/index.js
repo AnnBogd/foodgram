@@ -42,7 +42,7 @@ const About = ({ updateOrders, orders }) => {
               <a href="https://github.com/AnnBogd/foodgram" className={styles.textLink}>Github</a>
             </p>
             <p className={styles.textItem}>
-              Автор проекта: <a href="#" className={styles.textLink}>Анна Богданова</a>
+              Автор проекта: <a href="https://github.com/AnnBogd" className={styles.textLink}>Анна Богданова</a>
             </p>
           </div>
         </aside>

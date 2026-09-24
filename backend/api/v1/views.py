@@ -95,10 +95,10 @@ class CustomUserViewSet(UserViewSet):
         permission_classes=[IsAuthenticated],
         url_path='subscribe'
     )
-    def subscribe(self, request: Request, pk: int = None) -> Response:
+    def subscribe(self, request: Request, id: int = None) -> Response:
         """Создать или удалить подписку."""
         user = request.user
-        author = get_object_or_404(current_user, pk=pk)
+        author = get_object_or_404(current_user, pk=id)
         if request.method == 'POST':
             if user == author:
                 return Response(
