@@ -11,22 +11,32 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
   backend:
-    image: annbogd/foodgram_backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    # image: annbogd/foodgram_backend
     env_file: .env
     restart: always
     volumes:
       - static:/backend_static
       - media:/app/media
+      - ./data:/app/data
     depends_on:
       - db
   frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     env_file: .env
-    image: annbogd/foodgram_frontend
-    command: cp -r /app/result_build/. /static/
+    # image: annbogd/foodgram_frontend
+    command: cp -r build/. /static/
     volumes:
       - static:/static
   gateway:
-    image: annbogd/foodgram_gateway
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    # image: annbogd/foodgram_gateway
     env_file: .env
     ports:
       - 8200:80
