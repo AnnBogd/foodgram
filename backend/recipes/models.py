@@ -4,9 +4,11 @@ from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
 
-MAX_NAME_LENGTH = 254
-MIN_COOKING_TIME = 0
-MIN_INGREDIENT_AMOUNT = 1
+from .constants import (
+    MAX_NAME_LENGTH,
+    MIN_COOKING_TIME,
+    MIN_INGREDIENT_AMOUNT
+)
 
 
 class IngredientRecipe(models.Model):

@@ -16,6 +16,7 @@ from rest_framework.serializers import (
     SerializerMethodField
 )
 
+from recipes.constants import MIN_COOKING_TIME
 from recipes.models import (
     Favourite,
     Ingredient,
@@ -98,14 +99,22 @@ class AvatarSerializer(ModelSerializer):
         model = current_user
         fields = ('avatar',)
 
+    def __init__(self, *args, **kwargs):
+        """Определить параметры поля в зависимости от запроса."""
+        super().__init__(*args, **kwargs)
+        request = self.context.get('request')
+        if request and request.method == 'PUT':
+            self.fields['avatar'].required = True
+            self.fields['avatar'].allow_null = False
+
     def update(
             self,
             instance: AbstractUser,
             validated_data: dict
     ) -> AbstractUser:
-        if validated_data.get('avatar') is not None and instance.avatar:
-            if instance.avatar:
-                instance.avatar.delete(save=False)
+        """Удалить старый аватар перед сохранением нового."""
+        if instance.avatar:
+            instance.avatar.delete(save=False)
         return super().update(instance, validated_data)
 
 
@@ -177,18 +186,14 @@ class RecipeReadSerializer(ModelSerializer):
         request = self.context.get('request')
         if not request or request.user.is_anonymous:
             return False
-        return Favourite.objects.filter(user=request.user, recipe=obj).exists()
+        return obj.favourite.filter(user=request.user).exists()
 
     def get_is_in_shopping_cart(self, obj: Recipe) -> bool:
         """Определить кастомное поле is_in_shopping_cart."""
         request = self.context.get('request')
         if not request or request.user.is_anonymous:
             return False
-        return (
-            ShoppingCart.objects
-            .filter(user=request.user, recipe=obj)
-            .exists()
-        )
+        return obj.shopping_cart.filter(user=request.user).exists()
 
 
 class RecipeWriteSerializer(ModelSerializer):
@@ -208,6 +213,9 @@ class RecipeWriteSerializer(ModelSerializer):
             'text',
             'cooking_time',
         )
+        extra_kwargs = {
+            'cooking_time': {'min_value': MIN_COOKING_TIME},
+        }
 
     def validate(self, data: dict) -> dict:
         """Проверить вводимые данные."""

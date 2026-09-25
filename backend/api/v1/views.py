@@ -4,12 +4,14 @@ from django.contrib.auth import get_user_model
 from django.db.models import (
     Case,
     Model,
+    Q,
     QuerySet,
     Sum,
     When,
     Value,
     IntegerField
 )
+from django_filters.rest_framework import DjangoFilterBackend
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
@@ -34,6 +36,7 @@ from recipes.models import (
 )
 from users.models import Subscription
 from .filters import RecipeFilter
+from .permissions import IsAuthorOrReadOnly
 from .serializers import (
     AvatarSerializer,
     RecipeReadSerializer,
@@ -169,20 +172,18 @@ class IngredientViewSet(ReadOnlyModelViewSet):
         """Получить выборку ингредиентов в зависимости от поиска."""
         queryset = super().get_queryset()
         name_query = self.request.query_params.get('name')
-        if name_query:
-            name_query = name_query.lower()
-            queryset = (
-                queryset.filter(name__istartswith=name_query)
-                | queryset.filter(name__icontains=name_query)
+        if not name_query:
+            return queryset
+        queryset = queryset.filter(
+            Q(name__istartswith=name_query) | Q(name__icontains=name_query)
+        ).annotate(
+            search_order=Case(
+                When(name__istartswith=name_query, then=Value(1)),
+                When(name__icontains=name_query, then=Value(2)),
+                default=Value(3),
+                output_field=IntegerField(),
             )
-            queryset = queryset.annotate(
-                search_order=Case(
-                    When(name__istartswith=name_query, then=Value(1)),
-                    When(name__icontains=name_query, then=Value(2)),
-                    default=Value(3),
-                    output_field=IntegerField(),
-                )
-            ).order_by('search_order', 'name')
+        ).order_by('search_order', 'name')
         return queryset
 
 
@@ -191,7 +192,9 @@ class RecipeViewSet(ModelViewSet):
 
     queryset = Recipe.objects.all()
     http_method_names = ('get', 'post', 'patch', 'delete')
+    filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
+    permission_classes = (IsAuthorOrReadOnly,)
 
     def get_serializer_class(self) -> Serializer:
         """Выбрать сериализатор в зависимости от действия."""

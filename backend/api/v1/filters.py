@@ -3,10 +3,10 @@
 from django.contrib.auth import get_user_model
 from django.db.models import QuerySet
 from django_filters import (
-    BooleanFilter,
     FilterSet,
     ModelChoiceFilter,
-    ModelMultipleChoiceFilter
+    ModelMultipleChoiceFilter,
+    NumberFilter
 )
 
 from recipes.models import Recipe, Tag
@@ -24,8 +24,8 @@ class RecipeFilter(FilterSet):
         conjoined=False
     )
     author = ModelChoiceFilter(queryset=current_user.objects.all())
-    is_favorited = BooleanFilter(method='filter_is_favorited')
-    is_in_shopping_cart = BooleanFilter(method='filter_is_in_shopping_cart')
+    is_favorited = NumberFilter(method='filter_is_favorited')
+    is_in_shopping_cart = NumberFilter(method='filter_is_in_shopping_cart')
 
     class Meta:
         model = Recipe
@@ -38,8 +38,9 @@ class RecipeFilter(FilterSet):
         value: int
     ) -> QuerySet:
         """Обработать входное значение и сформировать выборку."""
-        if value and self.request.user.is_authenticated:
-            return queryset.filter(favourite__user=self.request.user)
+        user = self.request.user
+        if value == 1 and user.is_authenticated:
+            return queryset.filter(favourite__user=user)
         return queryset
 
     def filter_is_in_shopping_cart(
@@ -49,6 +50,7 @@ class RecipeFilter(FilterSet):
         value: int
     ) -> QuerySet:
         """Обработать входное значение и сформировать выборку."""
-        if value and self.request.user.is_authenticated:
-            return queryset.filter(shopping_cart__user=self.request.user)
+        user = self.request.user
+        if value == 1 and user.is_authenticated:
+            return queryset.filter(shopping_cart__user=user)
         return queryset
