@@ -1,5 +1,7 @@
 """Модели приложения recipes."""
 
+import secrets
+
 from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
@@ -9,6 +11,11 @@ from .constants import (
     MIN_COOKING_TIME,
     MIN_INGREDIENT_AMOUNT
 )
+
+
+def generate_short_code() -> str:
+    """Сгенерировать короткий код для ссылки."""
+    return secrets.token_urlsafe(4)[:6]
 
 
 class IngredientRecipe(models.Model):
@@ -138,6 +145,12 @@ class Recipe(models.Model):
         auto_now_add=True,
         verbose_name='Дата публикации рецепта',
     )
+    short_code = models.CharField(
+        max_length=8,
+        unique=True,
+        blank=True,
+        verbose_name='Короткий код',
+    )
 
     class Meta:
         verbose_name = 'Рецепт'
@@ -148,6 +161,19 @@ class Recipe(models.Model):
     def __str__(self) -> str:
         """Переопределить строковое определение рецепта."""
         return f'{self.name}'
+
+    def save(self, *args, **kwargs) -> None:
+        """Сохранить короткий код в объект рецепта."""
+        if not self.short_code:
+            self.short_code = self._generate_unique_code()
+        super().save(*args, **kwargs)
+
+    def _generate_unique_code(self) -> str:
+        """Сгенерировать уникальный короткий код."""
+        while True:
+            code = generate_short_code()
+            if not Recipe.objects.filter(short_code=code).exists():
+                return code
 
 
 class Favourite(models.Model):

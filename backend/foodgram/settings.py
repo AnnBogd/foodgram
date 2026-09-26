@@ -131,3 +131,5 @@ DJOSER = {
         'user_create': ['rest_framework.permissions.AllowAny'],
     }
 }
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

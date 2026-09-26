@@ -12,8 +12,8 @@ from django.db.models import (
     IntegerField
 )
 from django_filters.rest_framework import DjangoFilterBackend
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404, redirect
 from djoser.views import UserViewSet
 from rest_framework import status
 from rest_framework.decorators import action
@@ -48,6 +48,12 @@ from .serializers import (
 )
 
 current_user = get_user_model()
+
+
+def recipe_short_link(request: Request, code: str) -> HttpResponseRedirect:
+    """Сделать редирект с короткой ссылки на эндпоинт рецепта."""
+    recipe = get_object_or_404(Recipe, short_code=code)
+    return redirect(f'/recipes/{recipe.pk}/')
 
 
 class CustomUserViewSet(UserViewSet):
@@ -211,7 +217,7 @@ class RecipeViewSet(ModelViewSet):
     def get_link(self, request: Request, pk=None) -> Response:
         """Получить короткую ссылку на рецепт."""
         recipe = get_object_or_404(Recipe, pk=pk)
-        short_link = request.build_absolute_uri(f'/s/{recipe.id}/')
+        short_link = request.build_absolute_uri(f'/s/{recipe.short_code}')
         return Response({'short-link': short_link}, status=status.HTTP_200_OK)
 
     @action(
