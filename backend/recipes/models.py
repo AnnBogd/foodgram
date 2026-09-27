@@ -7,7 +7,11 @@ from django.core.validators import MinValueValidator
 from django.db import models
 
 from .constants import (
-    MAX_NAME_LENGTH,
+    MAX_INGREDIENT_NAME_LENGTH,
+    MAX_MEASUREMENT_UNIT_LENGTH,
+    MAX_RECIPE_NAME_LENGTH,
+    MAX_TAG_NAME_LENGTH,
+    MAX_TAG_SLUG_LENGTH,
     MIN_COOKING_TIME,
     MIN_INGREDIENT_AMOUNT
 )
@@ -65,12 +69,13 @@ class Tag(models.Model):
 
     name = models.CharField(
         'Название тега',
-        max_length=MAX_NAME_LENGTH,
+        max_length=MAX_TAG_NAME_LENGTH,
         unique=True,
     )
     slug = models.SlugField(
         'Слаг тега',
         unique=True,
+        max_length=MAX_TAG_SLUG_LENGTH,
     )
 
     class Meta:
@@ -88,11 +93,11 @@ class Ingredient(models.Model):
 
     name = models.CharField(
         'Название ингредиента',
-        max_length=MAX_NAME_LENGTH,
+        max_length=MAX_INGREDIENT_NAME_LENGTH,
     )
     measurement_unit = models.CharField(
         'Единица измерения ингредиента',
-        max_length=MAX_NAME_LENGTH,
+        max_length=MAX_MEASUREMENT_UNIT_LENGTH,
     )
 
     class Meta:
@@ -115,7 +120,7 @@ class Recipe(models.Model):
     )
     name = models.CharField(
         'Название рецепта',
-        max_length=MAX_NAME_LENGTH,
+        max_length=MAX_RECIPE_NAME_LENGTH,
     )
     image = models.ImageField(
         'Фото рецепта',

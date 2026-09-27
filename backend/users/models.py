@@ -3,13 +3,16 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 
+from .constants import (
+    MAX_EMAIL_LENGTH,
+    MAX_FIRST_NAME_LENGTH,
+    MAX_LAST_NAME_LENGTH,
+    MAX_USERNAME_LENGTH
+)
 from .validators import (
     validate_username_characters,
     validate_username_not_forbidden,
 )
-
-NAME_MAX_LENGTH = 150
-EMAIL_MAX_LENGTH = 254
 
 
 class CustomUserManager(BaseUserManager):
@@ -80,21 +83,21 @@ class CustomUser(AbstractUser):
     first_name = models.CharField(
         'Имя',
         blank=False,
-        max_length=NAME_MAX_LENGTH,
+        max_length=MAX_FIRST_NAME_LENGTH,
     )
     last_name = models.CharField(
         'Фамилия',
         blank=False,
-        max_length=NAME_MAX_LENGTH,
+        max_length=MAX_LAST_NAME_LENGTH,
     )
     email = models.EmailField(
         'Адрес электронной почты',
-        max_length=EMAIL_MAX_LENGTH,
+        max_length=MAX_EMAIL_LENGTH,
         unique=True,
     )
     username = models.CharField(
         'Имя пользователя',
-        max_length=NAME_MAX_LENGTH,
+        max_length=MAX_USERNAME_LENGTH,
         unique=True,
         validators=(
             validate_username_characters,
