@@ -1,8 +1,8 @@
 """Кастомные пермишены первой версии приложения api."""
 
 from django.db.models import Model
+from rest_framework.permissions import SAFE_METHODS, IsAuthenticatedOrReadOnly
 from rest_framework.request import Request
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, SAFE_METHODS
 from rest_framework.viewsets import ModelViewSet
 
 

@@ -3,16 +3,10 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 
-from .constants import (
-    MAX_EMAIL_LENGTH,
-    MAX_FIRST_NAME_LENGTH,
-    MAX_LAST_NAME_LENGTH,
-    MAX_USERNAME_LENGTH
-)
-from .validators import (
-    validate_username_characters,
-    validate_username_not_forbidden,
-)
+from .constants import (MAX_EMAIL_LENGTH, MAX_FIRST_NAME_LENGTH,
+                        MAX_LAST_NAME_LENGTH, MAX_USERNAME_LENGTH)
+from .validators import (validate_username_characters,
+                         validate_username_not_forbidden)
 
 
 class CustomUserManager(BaseUserManager):

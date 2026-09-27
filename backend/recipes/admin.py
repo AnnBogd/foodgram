@@ -4,14 +4,8 @@ from django.contrib import admin
 from django.db.models import Model, QuerySet
 from django.http import HttpRequest
 
-from .models import (
-    Favourite,
-    Ingredient,
-    IngredientRecipe,
-    Recipe,
-    ShoppingCart,
-    Tag
-)
+from .models import (Favourite, Ingredient, IngredientRecipe, Recipe,
+                     ShoppingCart, Tag)
 
 
 @admin.register(Recipe)

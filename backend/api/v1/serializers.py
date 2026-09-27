@@ -7,24 +7,14 @@ from django.contrib.auth.models import AbstractUser
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
-from djoser.serializers import UserSerializer, UserCreateSerializer
-from rest_framework.serializers import (
-    ValidationError,
-    ImageField,
-    ModelSerializer,
-    PrimaryKeyRelatedField,
-    SerializerMethodField
-)
+from djoser.serializers import UserCreateSerializer, UserSerializer
+from rest_framework.serializers import (ImageField, ModelSerializer,
+                                        PrimaryKeyRelatedField,
+                                        SerializerMethodField, ValidationError)
 
 from recipes.constants import MIN_COOKING_TIME
-from recipes.models import (
-    Favourite,
-    Ingredient,
-    IngredientRecipe,
-    Recipe,
-    ShoppingCart,
-    Tag
-)
+from recipes.models import (Favourite, Ingredient, IngredientRecipe, Recipe,
+                            ShoppingCart, Tag)
 from users.models import Subscription
 
 current_user = get_user_model()

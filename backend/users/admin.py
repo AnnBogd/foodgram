@@ -6,6 +6,7 @@ from django.db.models import QuerySet
 from django.http import HttpRequest
 
 from recipes.models import Favourite, ShoppingCart
+
 from .models import CustomUser, Subscription
 
 

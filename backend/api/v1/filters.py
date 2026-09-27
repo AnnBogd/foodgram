@@ -2,12 +2,8 @@
 
 from django.contrib.auth import get_user_model
 from django.db.models import QuerySet
-from django_filters import (
-    FilterSet,
-    ModelChoiceFilter,
-    ModelMultipleChoiceFilter,
-    NumberFilter
-)
+from django_filters import (FilterSet, ModelChoiceFilter,
+                            ModelMultipleChoiceFilter, NumberFilter)
 
 from recipes.models import Recipe, Tag
 

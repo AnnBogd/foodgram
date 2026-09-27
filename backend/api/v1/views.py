@@ -1,51 +1,30 @@
 """представления первой версии приложения api."""
 
 from django.contrib.auth import get_user_model
-from django.db.models import (
-    Case,
-    Model,
-    Q,
-    QuerySet,
-    Sum,
-    When,
-    Value,
-    IntegerField
-)
-from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import (Case, IntegerField, Model, Q, QuerySet, Sum,
+                              Value, When)
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
+from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.permissions import (
-    AllowAny,
-    IsAuthenticated,
-)
-from rest_framework.response import Response
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
+from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from recipes.models import (
-    Favourite,
-    Ingredient,
-    IngredientRecipe,
-    Recipe,
-    ShoppingCart,
-    Tag
-)
+from recipes.models import (Favourite, Ingredient, IngredientRecipe, Recipe,
+                            ShoppingCart, Tag)
 from users.models import Subscription
+
 from .filters import RecipeFilter
 from .permissions import IsAuthorOrReadOnly
-from .serializers import (
-    AvatarSerializer,
-    RecipeReadSerializer,
-    RecipeWriteSerializer,
-    ShortRecipeSerializer,
-    SubscriptionSerializer,
-    IngredientSerializer,
-    TagSerializer
-)
+from .serializers import (AvatarSerializer, IngredientSerializer,
+                          RecipeReadSerializer, RecipeWriteSerializer,
+                          ShortRecipeSerializer, SubscriptionSerializer,
+                          TagSerializer)
 
 current_user = get_user_model()
 
