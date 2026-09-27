@@ -1,0 +1,147 @@
+name: Main Foodgram Workflow
+on:
+  push:
+    branches:
+    - main
+jobs:
+  frontend_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+      - name: Test frontend
+        working-directory: ./frontend
+        run: npm run test
+
+  backend_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: 3.12
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools
+          pip install -r backend/requirements.txt
+          pip install flake8==7.3.0 flake8-isort==7.0.0
+      - name: Test backend with Flake8
+        run: python -m flake8 backend/
+
+  build_backend_and_push_to_docker_hub:
+    name: Push backend Docker image to DockerHub
+    needs:
+      - frontend_tests
+      - backend_tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+      - name: Login to Docker
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push image
+        uses: docker/build-push-action@v7
+        with:
+          context: ./backend/
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/foodgram_backend:latest
+
+  build_frontend_and_push_to_docker_hub:
+    name: Push frontend Docker image to DockerHub
+    runs-on: ubuntu-latest
+    needs:
+      - frontend_tests
+      - backend_tests
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+      - name: Login to Docker
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push image
+        uses: docker/build-push-action@v7
+        with:
+          context: ./frontend/
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/foodgram_frontend:latest
+
+  build_gateway_and_push_to_docker_hub:
+    name: Push gateway Docker image to DockerHub
+    needs:
+      - frontend_tests
+      - backend_tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+      - name: Login to Docker
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push image
+        uses: docker/build-push-action@v7
+        with:
+          context: ./gateway/
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/foodgram_gateway:latest
+
+  deploy:
+    name: Deploy project to server
+    runs-on: ubuntu-latest
+    needs:
+      - build_backend_and_push_to_docker_hub
+      - build_frontend_and_push_to_docker_hub
+      - build_gateway_and_push_to_docker_hub
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+      - name: Copy docker-compose file
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "docker-compose.prod.yml"
+          target: foodgram_prod
+      - name: Executing remote ssh commands to deploy
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd foodgram_prod
+            echo 'POSTGRES_DB=${{ secrets.POSTGRES_DB }}' > .env
+            echo 'POSTGRES_USER=${{ secrets.POSTGRES_USER }}' >> .env
+            echo 'POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}' >> .env
+            echo 'DB_HOST=${{ secrets.DB_HOST }}' >> .env
+            echo 'DB_PORT=${{ secrets.DB_PORT }}' >> .env
+            echo 'SECRET_KEY="${{ secrets.SECRET_KEY }}"' >> .env
+            echo 'ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}' >> .env
+            echo 'CSRF_TRUSTED_ORIGINS=${{ secrets.CSRF_TRUSTED_ORIGINS }}' >> .env
+            sudo docker compose -f docker-compose.prod.yml pull
+            sudo docker compose -f docker-compose.prod.yml down
+            sudo docker compose -f docker-compose.prod.yml up -d
+            sudo docker compose -f docker-compose.prod.yml exec -T backend python manage.py migrate
+            sudo docker compose -f docker-compose.prod.yml exec -T backend python manage.py collectstatic --no-input
