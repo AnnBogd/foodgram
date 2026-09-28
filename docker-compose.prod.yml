@@ -1,7 +1,9 @@
 volumes:
   pg_data:
+    name: foodgram_pg_data
   static:
   media:
+    name: foodgram_media
 
 services:
   db:
