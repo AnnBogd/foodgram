@@ -8,13 +8,12 @@ from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
 from djoser.serializers import UserCreateSerializer, UserSerializer
-from rest_framework.serializers import (ImageField, ModelSerializer,
-                                        PrimaryKeyRelatedField,
-                                        SerializerMethodField, ValidationError)
-
 from recipes.constants import MIN_COOKING_TIME
 from recipes.models import (Favourite, Ingredient, IngredientRecipe, Recipe,
                             ShoppingCart, Tag)
+from rest_framework.serializers import (ImageField, ModelSerializer,
+                                        PrimaryKeyRelatedField,
+                                        SerializerMethodField, ValidationError)
 from users.models import Subscription
 
 current_user = get_user_model()
