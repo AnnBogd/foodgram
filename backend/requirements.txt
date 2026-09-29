@@ -8,11 +8,15 @@ Django==4.2.11
 django-filter==24.2
 django-templated-mail==1.1.1
 djangorestframework==3.15.1
+djangorestframework_simplejwt==5.5.1
 djoser==2.2.2
+drf-extra-fields==3.7.0
+filetype==1.2.0
 gunicorn==25.3.0
 idna==3.20
 Markdown==3.10.3
 oauthlib==3.3.1
+packaging==26.3
 pillow==10.2.0
 psycopg2-binary==2.9.9
 pycparser==3.0
@@ -24,4 +28,5 @@ setuptools==69.0.0
 social-auth-app-django==5.4.1
 social-auth-core==4.9.1
 sqlparse==0.6.0
+tzdata==2026.4
 urllib3==2.8.0

@@ -20,7 +20,7 @@ from users.models import Subscription
 
 from .filters import RecipeFilter
 from .permissions import IsAuthorOrReadOnly
-from .serializers import (AvatarSerializer, IngredientSerializer,
+from .serializers import (AvatarSerializer, IngredientReadSerializer,
                           RecipeReadSerializer, RecipeWriteSerializer,
                           ShortRecipeSerializer, SubscriptionSerializer,
                           TagSerializer)
@@ -36,19 +36,7 @@ def recipe_short_link(request: Request, code: str) -> HttpResponseRedirect:
 
 class CustomUserViewSet(UserViewSet):
     """Кастомный вьюсет юзера для расширения базового вьюсета djoser."""
-
-    def destroy(self, request: Request, *args, **kwargs) -> Response:
-        """Полностью удалить эндпоинт DELETE /api/users/{id}/"""
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    def update(self, request: Request, *args, **kwargs) -> Response:
-        """Полностью удалить эндпоинт PUT /api/users/{id}/"""
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    def partial_update(self, request: Request, *args, **kwargs) -> Response:
-        """Полностью удалить эндпоинт PATCH /api/users/{id}/"""
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
+    # подумать про наследование от миксинов
     @action(
         detail=False,
         methods=['get'],
@@ -124,8 +112,7 @@ class CustomUserViewSet(UserViewSet):
         """Добавить или удалить аватар."""
         user = request.user
         if request.method == 'PUT':
-            serializer = AvatarSerializer(
-                user, data=request.data, context={'request': request})
+            serializer = AvatarSerializer(user, data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -149,7 +136,7 @@ class IngredientViewSet(ReadOnlyModelViewSet):
     """Вьюсет для ингредиентов."""
 
     queryset = Ingredient.objects.all()
-    serializer_class = IngredientSerializer
+    serializer_class = IngredientReadSerializer
     pagination_class = None
 
     def get_queryset(self) -> QuerySet:

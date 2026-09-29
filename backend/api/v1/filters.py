@@ -34,7 +34,7 @@ class RecipeFilter(FilterSet):
     ) -> QuerySet:
         """Обработать входное значение и сформировать выборку."""
         user = self.request.user
-        if value == 1 and user.is_authenticated:
+        if value and user.is_authenticated:
             return queryset.filter(favourite__user=user)
         return queryset
 
@@ -46,6 +46,6 @@ class RecipeFilter(FilterSet):
     ) -> QuerySet:
         """Обработать входное значение и сформировать выборку."""
         user = self.request.user
-        if value == 1 and user.is_authenticated:
+        if value and user.is_authenticated:
             return queryset.filter(shopping_cart__user=user)
         return queryset

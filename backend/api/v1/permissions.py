@@ -16,6 +16,4 @@ class IsAuthorOrReadOnly(IsAuthenticatedOrReadOnly):
             obj: Model
     ) -> bool:
         """Определить авторство рецепта."""
-        if request.method in SAFE_METHODS:
-            return True
-        return obj.author == request.user
+        return request.method in SAFE_METHODS or obj.author == request.user
