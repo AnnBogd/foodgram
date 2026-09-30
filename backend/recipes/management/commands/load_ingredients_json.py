@@ -2,6 +2,7 @@
 
 import json
 import os
+from pathlib import Path
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -12,7 +13,8 @@ class Command(BaseCommand):
     help = 'Загрузка ингредиентов из JSON файла'
 
     def handle(self, *args, **options):
-        file_path = os.path.join(settings.BASE_DIR, 'data', 'ingredients.json')
+        file_path = (
+            Path(settings.BASE_DIR).parent / 'data' / 'ingredients.json')
 
         if not os.path.exists(file_path):
             self.stdout.write(

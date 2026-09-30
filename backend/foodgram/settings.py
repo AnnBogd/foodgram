@@ -11,7 +11,8 @@ DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
-CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://localhost:8000,http://127.0.0.1:8000').split(',')
+CSRF_TRUSTED_ORIGINS = os.getenv(
+    'CSRF_TRUSTED_ORIGINS', 'http://localhost:8000,http://127.0.0.1:8000').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -29,8 +30,7 @@ INSTALLED_APPS = [
     'api.apps.ApiConfig',
 ]
 
-AUTH_USER_MODEL = 'users.CustomUser'
-FORBIDDEN_USERNAMES = ('me',)
+AUTH_USER_MODEL = 'users.AppUser'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -73,7 +73,6 @@ DATABASES = {
     }
 }
 
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -112,7 +111,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'api.v1.paginator.CustomPaginator',
+    'DEFAULT_PAGINATION_CLASS': 'api.v1.paginator.RecipePaginator',
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend'
     ],
@@ -122,14 +121,13 @@ DJOSER = {
     'LOGIN_FIELD': 'email',
     'HIDE_USERS': False,
     'SERIALIZERS': {
-        'user_create': 'api.v1.serializers.CustomUserCreateSerializer',
-        'user': 'api.v1.serializers.CustomUserSerializer',
-        'current_user': 'api.v1.serializers.CustomUserSerializer',
+        'user': 'api.v1.serializers.UserSerializer',
+        'current_user': 'api.v1.serializers.UserSerializer',
     },
     'PERMISSIONS': {
-        'user': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],
-        'user_list': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],
-        'user_create': ['rest_framework.permissions.AllowAny'],
+        'set_password': ['rest_framework.permissions.IsAuthenticated'],
+        'token_create': ['rest_framework.permissions.AllowAny'],
+        'token_destroy': ['rest_framework.permissions.IsAuthenticated'],
     }
 }
 
