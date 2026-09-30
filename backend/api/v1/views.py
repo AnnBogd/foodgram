@@ -19,7 +19,7 @@ from users.models import Subscription
 
 from .filters import IngredientFilter, RecipeFilter
 from .permissions import IsAuthorOrReadOnly
-from .serializers import (AvatarSerializer, AuthorSerializer,
+from .serializers import (AuthorSerializer, AvatarSerializer,
                           FavouriteSerializer, IngredientReadSerializer,
                           RecipeReadSerializer, RecipeWriteSerializer,
                           ShoppingCartSerializer, SubscriptionSerializer,

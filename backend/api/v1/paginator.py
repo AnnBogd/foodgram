@@ -2,7 +2,6 @@
 
 from rest_framework.pagination import PageNumberPagination
 
-
 PAGE_SIZE = 6
 
 

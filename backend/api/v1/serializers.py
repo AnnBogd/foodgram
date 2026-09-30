@@ -7,9 +7,9 @@ from django.db.models import Model
 from drf_extra_fields.fields import Base64ImageField
 from recipes.models import (Favourite, Ingredient, IngredientRecipe, Recipe,
                             ShoppingCart, Tag)
-from rest_framework.serializers import (ModelSerializer, PrimaryKeyRelatedField,
-                                        ReadOnlyField, SerializerMethodField,
-                                        ValidationError)
+from rest_framework.serializers import (ModelSerializer,
+                                        PrimaryKeyRelatedField, ReadOnlyField,
+                                        SerializerMethodField, ValidationError)
 from users.models import Subscription
 
 current_user = get_user_model()
