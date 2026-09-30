@@ -3,18 +3,15 @@
 import secrets
 
 from django.conf import settings
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from .constants import (MAX_INGREDIENT_NAME_LENGTH,
+from .constants import (MAX_COOKING_TIME, MAX_INGREDIENT_AMOUNT,
+                        MAX_INGREDIENT_NAME_LENGTH,
                         MAX_MEASUREMENT_UNIT_LENGTH, MAX_RECIPE_NAME_LENGTH,
-                        MAX_TAG_NAME_LENGTH, MAX_TAG_SLUG_LENGTH,
-                        MIN_COOKING_TIME, MIN_INGREDIENT_AMOUNT)
-
-
-def generate_short_code() -> str:
-    """Сгенерировать короткий код для ссылки."""
-    return secrets.token_urlsafe(4)[:6]
+                        MAX_SHORT_CODE_LENGTH, MAX_TAG_NAME_LENGTH,
+                        MAX_TAG_SLUG_LENGTH, MIN_COOKING_TIME,
+                        MIN_INGREDIENT_AMOUNT)
 
 
 class IngredientRecipe(models.Model):
@@ -32,13 +29,18 @@ class IngredientRecipe(models.Model):
         related_name='recipe_list',
         verbose_name='Ингредиент',
     )
-    amount = models.PositiveIntegerField(
+    amount = models.PositiveSmallIntegerField(
         'Количество',
         validators=[
             MinValueValidator(
                 MIN_INGREDIENT_AMOUNT,
                 'Количество ингредиента не может быть меньше '
                 f'{MIN_INGREDIENT_AMOUNT}'
+            ),
+            MaxValueValidator(
+                MAX_INGREDIENT_AMOUNT,
+                'Количество ингредиента не может быть больше '
+                f'{MAX_INGREDIENT_AMOUNT}'
             )
         ],
     )
@@ -99,6 +101,12 @@ class Ingredient(models.Model):
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
         ordering = ('name',)
+        constraints = [
+            models.UniqueConstraint(
+                fields=['name', 'measurement_unit'],
+                name='unique_name_measurement_unit'
+            )
+        ]
 
     def __str__(self) -> str:
         """Переопределить строковое определение ингредиента."""
@@ -131,13 +139,18 @@ class Recipe(models.Model):
         Tag,
         verbose_name='Теги',
     )
-    cooking_time = models.PositiveIntegerField(
+    cooking_time = models.PositiveSmallIntegerField(
         'Время приготовления в минутах',
         validators=[
             MinValueValidator(
                 MIN_COOKING_TIME,
                 'Время приготовления не может быть меньше '
                 f'{MIN_COOKING_TIME} минут'
+            ),
+            MaxValueValidator(
+                MAX_COOKING_TIME,
+                'Время приготовления не может быть больше '
+                f'{MAX_COOKING_TIME} минут'
             )
         ]
     )
@@ -146,7 +159,7 @@ class Recipe(models.Model):
         verbose_name='Дата публикации рецепта',
     )
     short_code = models.CharField(
-        max_length=8,
+        max_length=MAX_SHORT_CODE_LENGTH,
         unique=True,
         blank=True,
         verbose_name='Короткий код',
@@ -168,10 +181,14 @@ class Recipe(models.Model):
             self.short_code = self._generate_unique_code()
         super().save(*args, **kwargs)
 
+    def _generate_short_code(self) -> str:
+        """Сгенерировать короткий код для ссылки."""
+        return secrets.token_urlsafe(4)[:6]
+
     def _generate_unique_code(self) -> str:
         """Сгенерировать уникальный короткий код."""
         while True:
-            code = generate_short_code()
+            code = self._generate_short_code()
             if not Recipe.objects.filter(short_code=code).exists():
                 return code
 

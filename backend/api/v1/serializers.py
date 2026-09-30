@@ -3,8 +3,10 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.db import transaction
+from django.db.models import Model
 from drf_extra_fields.fields import Base64ImageField
-from recipes.models import Ingredient, IngredientRecipe, Recipe, Tag
+from recipes.models import (Favourite, Ingredient, IngredientRecipe, Recipe,
+                            ShoppingCart, Tag)
 from rest_framework.serializers import (ModelSerializer, PrimaryKeyRelatedField,
                                         ReadOnlyField, SerializerMethodField,
                                         ValidationError)
@@ -110,7 +112,10 @@ class RecipeReadSerializer(ModelSerializer):
 
     tags = TagSerializer(many=True)
     author = UserSerializer()
-    ingredients = IngredientInsideRecipeSerializer(many=True)
+    ingredients = IngredientInsideRecipeSerializer(
+        many=True,
+        source='ingredient_list'
+    )
     is_favorited = SerializerMethodField()
     is_in_shopping_cart = SerializerMethodField()
 
@@ -170,6 +175,9 @@ class RecipeWriteSerializer(ModelSerializer):
         """Проверить вводимые данные."""
         ingredients = data.get('ingredients')
         tags = data.get('tags')
+        image = data.get('image')
+        if not image:
+            raise ValidationError({'image': 'Изображение обязательно.'})
         if not ingredients:
             raise ValidationError(
                 {
@@ -233,54 +241,8 @@ class ShortRecipeSerializer(ModelSerializer):
         fields = ('id', 'name', 'image', 'cooking_time')
 
 
-# class ShoppingCartCreateSerializer(ModelSerializer):
-#     """Сериализатор для добавления рецепта в список покупок."""
-
-#     class Meta:
-#         model = ShoppingCart
-#         fields = ('user', 'recipe')
-
-#     def validate(self, data: dict) -> dict:
-#         """Проверить введенные данные."""
-#         user = data.get('user')
-#         recipe = data.get('recipe')
-#         if ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
-#             raise ValidationError('Этот рецепт уже добавлен в список покупок.')
-#         return data
-
-#     def to_representation(self, instance: ShoppingCart) -> dict:
-#         """Преобразовать данные для выдачи ответа."""
-#         return ShortRecipeSerializer(
-#             instance.recipe,
-#             context=self.context
-#         ).data
-
-
-# class FavouriteCreateSerializer(ModelSerializer):
-#     """Сериализатор для добавления рецепта в избранное."""
-
-#     class Meta:
-#         model = Favourite
-#         fields = ('user', 'recipe')
-
-#     def validate(self, data: dict) -> dict:
-#         """Проверить введенные данные."""
-#         user = data.get('user')
-#         recipe = data.get('recipe')
-#         if Favourite.objects.filter(user=user, recipe=recipe).exists():
-#             raise ValidationError('Этот рецепт уже добавлен в избранное.')
-#         return data
-
-#     def to_representation(self, instance: Favourite) -> dict:
-#         """Преобразовать данные для выдачи ответа."""
-#         return ShortRecipeSerializer(
-#             instance.recipe,
-#             context=self.context
-#         ).data
-
-
-class SubscriptionSerializer(UserSerializer):
-    """Сериализатор подписок. Наследование от сериализатора юзера."""
+class AuthorSerializer(UserSerializer):
+    """Сериализатор авторов подписки. Наследование от сериализатора юзера."""
 
     recipes = SerializerMethodField()
     recipes_count = SerializerMethodField()
@@ -310,3 +272,86 @@ class SubscriptionSerializer(UserSerializer):
     def get_recipes_count(self, obj: AbstractUser) -> int:
         """Посчитать общее количество рецептов автора."""
         return obj.recipes.count()
+
+
+class SubscriptionSerializer(ModelSerializer):
+    """Сериализатор подписки."""
+
+    class Meta:
+        model = Subscription
+        fields = ('user', 'author')
+        read_only_fields = ('user',)
+
+    def validate(self, data: dict) -> dict:
+        """Проверить вводимые данные."""
+        user = self.context.get('request').user
+        author = data.get('author')
+        if user == author:
+            raise ValidationError('Вы не можете подписаться на самого себя.')
+        if Subscription.objects.filter(user=user, author=author).exists():
+            raise ValidationError('Вы уже подписаны на этого автора.')
+        return data
+
+    def create(self, validated_data: dict) -> Subscription:
+        """Создать подписку."""
+        user = self.context.get('request').user
+        author = validated_data.get('author')
+        return Subscription.objects.create(user=user, author=author)
+
+    def to_representation(self, instance: Subscription) -> dict:
+        """Преобразовать данные для выдачи ответа."""
+        return AuthorSerializer(instance.author, context=self.context).data
+
+
+class BaseRecipeActionSerializer(ModelSerializer):
+    """Базовый сериализатор для действий с рецептами."""
+
+    class Meta:
+        fields = ('user', 'recipe')
+        read_only_fields = ('user', 'recipe')
+
+    def validate(self, data: dict) -> dict:
+        """Проверить вводимые данные."""
+        user = self.context.get('request').user
+        recipe = self.context.get('recipe')
+        if self.Meta.model.objects.filter(user=user, recipe=recipe).exists():
+            raise ValidationError('Рецепт уже был добавлен.')
+        return data
+
+    def create(self, validated_data: dict) -> Model:
+        """Создать связь в промежуточной таблице."""
+        user = self.context.get('request').user
+        recipe = self.context.get('recipe')
+        return self.Meta.model.objects.create(user=user, recipe=recipe)
+
+    def to_representation(self, instance: Model) -> dict:
+        """Преобразовать данные для выдачи ответа."""
+        return ShortRecipeSerializer(
+            instance.recipe, context=self.context).data
+
+
+class ShoppingCartSerializer(BaseRecipeActionSerializer):
+    """Сериализатор списка покупок. Наследование от базового сериализатора."""
+
+    class Meta(BaseRecipeActionSerializer.Meta):
+        model = ShoppingCart
+
+    def validate(self, data: dict) -> dict:
+        """Проверить вводимые данные."""
+        try:
+            return super().validate(data)
+        except ValidationError:
+            raise ValidationError('Рецепт уже добавлен в Ваш список покупок.')
+
+
+class FavouriteSerializer(BaseRecipeActionSerializer):
+    """Сериализатор избранного. Наследование от базового сериализатора."""
+
+    class Meta(BaseRecipeActionSerializer.Meta):
+        model = Favourite
+
+    def validate(self, data: dict) -> dict:
+        try:
+            return super().validate(data)
+        except ValidationError:
+            raise ValidationError('Рецепт уже добавлен в Ваше избранное.')

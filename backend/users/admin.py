@@ -6,7 +6,7 @@ from django.db.models import QuerySet
 from django.http import HttpRequest
 from recipes.models import Favourite, ShoppingCart
 
-from .models import CustomUser, Subscription
+from .models import AppUser, Subscription
 
 
 class FavouriteInline(admin.TabularInline):
@@ -33,7 +33,7 @@ class ShoppingCartInline(admin.TabularInline):
         return super().get_queryset(request).select_related('recipe')
 
 
-@admin.register(CustomUser)
+@admin.register(AppUser)
 class CustomUserAdmin(UserAdmin):
     """Кастомная конфигурация админ-зоны пользователя."""
 

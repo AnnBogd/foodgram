@@ -29,8 +29,7 @@ INSTALLED_APPS = [
     'api.apps.ApiConfig',
 ]
 
-AUTH_USER_MODEL = 'users.CustomUser'
-FORBIDDEN_USERNAMES = ('me',)
+AUTH_USER_MODEL = 'users.AppUser'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -62,14 +61,20 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'foodgram.wsgi.application'
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': os.getenv('POSTGRES_DB', 'django'),
+#         'USER': os.getenv('POSTGRES_USER', 'django'),
+#         'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+#         'HOST': os.getenv('DB_HOST', ''),
+#         'PORT': int(os.getenv('DB_PORT', 5432))
+#     }
+# }
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DB', 'django'),
-        'USER': os.getenv('POSTGRES_USER', 'django'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
-        'HOST': os.getenv('DB_HOST', ''),
-        'PORT': int(os.getenv('DB_PORT', 5432))
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
@@ -122,14 +127,13 @@ DJOSER = {
     'LOGIN_FIELD': 'email',
     'HIDE_USERS': False,
     'SERIALIZERS': {
-        'user_create': 'api.v1.serializers.CustomUserCreateSerializer',
         'user': 'api.v1.serializers.UserSerializer',
-        'current_user': 'api.v1.serializers.CustomUserSerializer',
+        'current_user': 'api.v1.serializers.UserSerializer',
     },
     'PERMISSIONS': {
-        'user': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],
-        'user_list': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],
-        'user_create': ['rest_framework.permissions.AllowAny'],
+        'set_password': ['rest_framework.permissions.IsAuthenticated'],
+        'token_create': ['rest_framework.permissions.AllowAny'],
+        'token_destroy': ['rest_framework.permissions.IsAuthenticated'],
     }
 }
 
