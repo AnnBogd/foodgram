@@ -1,3 +1,5 @@
+"""Команда для загрузки тегов в базу данных из формата json."""
+
 import json
 from pathlib import Path
 
