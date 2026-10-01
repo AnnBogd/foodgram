@@ -128,6 +128,8 @@ DJOSER = {
         'set_password': ['rest_framework.permissions.IsAuthenticated'],
         'token_create': ['rest_framework.permissions.AllowAny'],
         'token_destroy': ['rest_framework.permissions.IsAuthenticated'],
+        'user_list': ['rest_framework.permissions.AllowAny'],
+        'user': ['api.v1.permissions.IsAdminOrReadOnly'],
     }
 }
 

@@ -5,11 +5,12 @@ from django.contrib.auth.models import AbstractUser
 from django.db import transaction
 from django.db.models import Model
 from drf_extra_fields.fields import Base64ImageField
-from recipes.models import (Favourite, Ingredient, IngredientRecipe, Recipe,
-                            ShoppingCart, Tag)
 from rest_framework.serializers import (ModelSerializer,
                                         PrimaryKeyRelatedField, ReadOnlyField,
                                         SerializerMethodField, ValidationError)
+
+from recipes.models import (Favourite, Ingredient, IngredientRecipe, Recipe,
+                            ShoppingCart, Tag)
 from users.models import Subscription
 
 current_user = get_user_model()
@@ -292,12 +293,6 @@ class SubscriptionSerializer(ModelSerializer):
             raise ValidationError('Вы уже подписаны на этого автора.')
         return data
 
-    def create(self, validated_data: dict) -> Subscription:
-        """Создать подписку."""
-        user = self.context.get('request').user
-        author = validated_data.get('author')
-        return Subscription.objects.create(user=user, author=author)
-
     def to_representation(self, instance: Subscription) -> dict:
         """Преобразовать данные для выдачи ответа."""
         return AuthorSerializer(instance.author, context=self.context).data
@@ -305,6 +300,8 @@ class SubscriptionSerializer(ModelSerializer):
 
 class BaseRecipeActionSerializer(ModelSerializer):
     """Базовый сериализатор для действий с рецептами."""
+
+    duplicate_error_message = 'Рецепт уже был добавлен.'
 
     class Meta:
         fields = ('user', 'recipe')
@@ -315,14 +312,8 @@ class BaseRecipeActionSerializer(ModelSerializer):
         user = self.context.get('request').user
         recipe = self.context.get('recipe')
         if self.Meta.model.objects.filter(user=user, recipe=recipe).exists():
-            raise ValidationError('Рецепт уже был добавлен.')
+            raise ValidationError(self.duplicate_error_message)
         return data
-
-    def create(self, validated_data: dict) -> Model:
-        """Создать связь в промежуточной таблице."""
-        user = self.context.get('request').user
-        recipe = self.context.get('recipe')
-        return self.Meta.model.objects.create(user=user, recipe=recipe)
 
     def to_representation(self, instance: Model) -> dict:
         """Преобразовать данные для выдачи ответа."""
@@ -333,25 +324,16 @@ class BaseRecipeActionSerializer(ModelSerializer):
 class ShoppingCartSerializer(BaseRecipeActionSerializer):
     """Сериализатор списка покупок. Наследование от базового сериализатора."""
 
+    duplicate_error_message = 'Рецепт уже добавлен в Ваш список покупок.'
+
     class Meta(BaseRecipeActionSerializer.Meta):
         model = ShoppingCart
-
-    def validate(self, data: dict) -> dict:
-        """Проверить вводимые данные."""
-        try:
-            return super().validate(data)
-        except ValidationError:
-            raise ValidationError('Рецепт уже добавлен в Ваш список покупок.')
 
 
 class FavouriteSerializer(BaseRecipeActionSerializer):
     """Сериализатор избранного. Наследование от базового сериализатора."""
 
+    duplicate_error_message = 'Рецепт уже добавлен в Ваше избранное.'
+
     class Meta(BaseRecipeActionSerializer.Meta):
         model = Favourite
-
-    def validate(self, data: dict) -> dict:
-        try:
-            return super().validate(data)
-        except ValidationError:
-            raise ValidationError('Рецепт уже добавлен в Ваше избранное.')

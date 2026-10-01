@@ -6,17 +6,17 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
-from recipes.models import (Favourite, Ingredient, IngredientRecipe, Recipe,
-                            ShoppingCart, Tag)
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
-from users.models import Subscription
 
+from recipes.models import (Favourite, Ingredient, IngredientRecipe, Recipe,
+                            ShoppingCart, Tag)
+from users.models import Subscription
 from .filters import IngredientFilter, RecipeFilter
 from .permissions import IsAuthorOrReadOnly
 from .serializers import (AuthorSerializer, AvatarSerializer,
@@ -36,14 +36,6 @@ def recipe_short_link(request: Request, code: str) -> HttpResponseRedirect:
 
 class ExtendedUserViewSet(UserViewSet):
     """Вьюсет для обработки эндпоинтов users."""
-
-    def get_permissions(self) -> tuple:
-        """Определить права доступа к методу."""
-        if self.action in ('list', 'retrieve', 'create'):
-            return (AllowAny(), )
-        if self.action in ('update', 'partial_update', 'destroy'):
-            return (IsAdminUser(), )
-        return super().get_permissions()
 
     @action(
         detail=False,
@@ -86,7 +78,7 @@ class ExtendedUserViewSet(UserViewSet):
             context={'request': request},
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.save(user=request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @subscribe.mapping.delete
@@ -97,12 +89,12 @@ class ExtendedUserViewSet(UserViewSet):
             user=request.user,
             author=author
         ).delete()
-        if deleted:
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(
-            {'errors': 'Вы не были подписаны на этого автора.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        if not deleted:
+            return Response(
+                {'errors': 'Вы не были подписаны на этого автора.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=False,
@@ -216,7 +208,7 @@ class RecipeViewSet(ModelViewSet):
         url_path='shopping_cart'
     )
     def add_to_shopping_cart(
-            self, request: Request, pk: int = None) -> Response:
+            self, request: Request, pk: int) -> Response:
         """Добавить рецепт в список покупок."""
         recipe = get_object_or_404(Recipe, pk=pk)
         serializer = ShoppingCartSerializer(
@@ -224,24 +216,24 @@ class RecipeViewSet(ModelViewSet):
             context={'request': request, 'recipe': recipe},
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.save(user=request.user, recipe=recipe)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @add_to_shopping_cart.mapping.delete
     def delete_from_shopping_cart(
-            self, request: Request, pk: int = None) -> Response:
+            self, request: Request, pk: int) -> Response:
         """Удалить рецепт из списка покупок."""
         recipe = get_object_or_404(Recipe, pk=pk)
         deleted, _ = ShoppingCart.objects.filter(
             user=request.user,
             recipe=recipe
         ).delete()
-        if deleted:
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(
-            {'errors': 'Этого рецепта не было в Вашем списке покупок.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        if not deleted:
+            return Response(
+                {'errors': 'Этого рецепта не было в Вашем списке покупок.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=True,
@@ -250,7 +242,7 @@ class RecipeViewSet(ModelViewSet):
         url_path='favorite'
     )
     def add_to_favorite(
-            self, request: Request, pk: int = None) -> Response:
+            self, request: Request, pk: int) -> Response:
         """Добавить рецепт в избранное."""
         recipe = get_object_or_404(Recipe, pk=pk)
         serializer = FavouriteSerializer(
@@ -258,21 +250,21 @@ class RecipeViewSet(ModelViewSet):
             context={'request': request, 'recipe': recipe},
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.save(user=request.user, recipe=recipe)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @add_to_favorite.mapping.delete
     def delete_from_favorite(
-            self, request: Request, pk: int = None) -> Response:
+            self, request: Request, pk: int) -> Response:
         """Удалить рецепт из избранного."""
         recipe = get_object_or_404(Recipe, pk=pk)
         deleted, _ = Favourite.objects.filter(
             user=request.user,
             recipe=recipe
         ).delete()
-        if deleted:
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(
-            {'errors': 'Этого рецепта не было в Вашем избранном.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        if not deleted:
+            return Response(
+                {'errors': 'Этого рецепта не было в Вашем избранном.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response(status=status.HTTP_204_NO_CONTENT)

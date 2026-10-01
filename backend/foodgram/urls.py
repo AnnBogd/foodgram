@@ -1,8 +1,9 @@
 """URLS проекта."""
 
-from api.v1.views import recipe_short_link
 from django.contrib import admin
 from django.urls import include, path
+
+from api.v1.views import recipe_short_link
 
 urlpatterns = [
     path('admin/', admin.site.urls),

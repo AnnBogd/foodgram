@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Case, IntegerField, Q, QuerySet, Value, When
 from django_filters import (CharFilter, FilterSet, ModelChoiceFilter,
                             ModelMultipleChoiceFilter, NumberFilter)
+
 from recipes.models import Ingredient, Recipe, Tag
 
 current_user = get_user_model()
