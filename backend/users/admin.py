@@ -4,8 +4,8 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.db.models import QuerySet
 from django.http import HttpRequest
-from recipes.models import Favourite, ShoppingCart
 
+from recipes.models import Favourite, ShoppingCart
 from .models import AppUser, Subscription
 
 
@@ -34,7 +34,7 @@ class ShoppingCartInline(admin.TabularInline):
 
 
 @admin.register(AppUser)
-class CustomUserAdmin(UserAdmin):
+class AppUserAdmin(UserAdmin):
     """Кастомная конфигурация админ-зоны пользователя."""
 
     list_display = (
